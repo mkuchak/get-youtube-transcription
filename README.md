@@ -1,10 +1,20 @@
 # YouTube Transcription API
 
-A minimalistic Flask application that retrieves transcriptions from YouTube videos.
+A minimalistic Flask application that retrieves transcriptions from YouTube videos using Webshare proxy.
 
 ## Requirements
 - Python 3.9+
 - Docker (optional)
+- Webshare proxy credentials (optional)
+
+## Configuration
+
+Create a `.env` file with your Webshare proxy credentials:
+
+```
+WEBSHARE_USERNAME=your_webshare_username
+WEBSHARE_PASSWORD=your_webshare_password
+```
 
 ## Installation and Running Locally
 
@@ -29,7 +39,7 @@ docker build -t youtube-transcript-api .
 
 2. Run the container:
 ```
-docker run -p 6391:5000 youtube-transcript-api
+docker run --env-file .env -p 6391:5000 youtube-transcript-api
 ```
 
 3. The API will be available at: http://localhost:6391

@@ -9,6 +9,8 @@ services:
       - "6391:5000"
     restart: unless-stopped
     container_name: youtube-transcript-api
+    env_file:
+      - .env
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/transcript?videoId=dQw4w9WgXcQ"]
       interval: 30s
@@ -19,4 +21,4 @@ services:
       resources:
         limits:
           cpus: '0.50'
-          memory: 256M 
+          memory: 256M
