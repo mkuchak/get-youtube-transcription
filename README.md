@@ -110,7 +110,8 @@ Content-Type: application/json
 {
     "videoId": "VIDEO_ID",
     "language": "en",  // optional, defaults to "en"
-    "proxy": "ENCRYPTED_PROXY_STRING"  // optional
+    "proxy": "ENCRYPTED_PROXY_STRING",  // optional
+    "preserveFormatting": true  // optional, defaults to false
 }
 ```
 
@@ -121,6 +122,7 @@ Parameters:
 - `proxy`: Encrypted proxy configuration string (encrypted using AES-GCM)
   - The proxy string should be encrypted before being sent to the API
   - The secret key must match the one configured in the server's environment variables
+- `preserveFormatting`: Boolean flag to preserve HTML formatting elements such as `<i>` (italics) and `<b>` (bold) (defaults to false)
 
 Examples:
 ```
@@ -138,6 +140,11 @@ curl -X POST http://localhost:6391/transcript \
 curl -X POST http://localhost:6391/transcript \
   -H "Content-Type: application/json" \
   -d '{"videoId": "VIDEO_ID", "proxy": "ENCRYPTED_PROXY_STRING"}'
+
+# Get transcript with HTML formatting preserved
+curl -X POST http://localhost:6391/transcript \
+  -H "Content-Type: application/json" \
+  -d '{"videoId": "VIDEO_ID", "preserveFormatting": true}'
 ```
 
 Note: The proxy string must be encrypted using the same secret key configured in the server's environment variables. The encryption implementation uses AES-GCM with the following parameters:
@@ -153,12 +160,14 @@ The API tries to fetch transcripts in the following order of priority:
 1. Manual (human-created) transcript in the requested language (default: English)
 2. Auto-generated transcript in its original language (ignoring the language parameter)
 3. Manual transcript in any language, translated to the requested language
-4. Last resort fallback to original API method
+4. Any available transcript in any language (as a fallback)
+5. Last resort fallback to direct fetch with the requested language
 
 The response includes additional metadata:
+- `transcript`: The transcript data with timing information
 - `language`: The language of the returned transcript 
 - `is_generated`: Whether the transcript was auto-generated
 - `translated`: Whether the transcript was translated from another language (for manual transcripts only)
 - `original_language`: The original language before translation (if applicable)
 
-This ensures you get the best available transcript quality for each video. Auto-generated transcripts are always provided in their original language to preserve accuracy. 
+This ensures you get the best available transcript quality for each video. The service is designed to always return a transcript if one is available in any language, rather than failing. 
