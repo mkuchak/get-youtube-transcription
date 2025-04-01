@@ -49,6 +49,9 @@ docker run --env-file .env -p 6391:5000 youtube-transcript-api
 1. Start the service:
 ```
 docker-compose up -d
+
+# Or do an entire rebuild
+docker-compose up -d --build --force-recreate --no-deps
 ```
 
 2. The API will be available at: http://localhost:6391
