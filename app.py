@@ -66,11 +66,11 @@ def get_transcript():
                 
             proxy_parts = parse_proxy_string(proxy_string)
             if proxy_parts:
+                proxy_string = f"{proxy_parts['username']}:{proxy_parts['password']}@{proxy_parts['host']}:{proxy_parts['port']}"
                 proxy_config = GenericProxyConfig(
-                    http_url=f"http://{proxy_parts['username']}:{proxy_parts['password']}@{proxy_parts['host']}:{proxy_parts['port']}",
-                    https_url=f"http://{proxy_parts['username']}:{proxy_parts['password']}@{proxy_parts['host']}:{proxy_parts['port']}"
+                    http_url=f"http://{proxy_string}"
                 )
-                print(f"Using proxy configuration for request")
+                print(f"Using proxy configuration for request: {proxy_string}")
                 sys.stdout.flush()
             else:
                 return jsonify({"error": "Invalid proxy string format. Expected format: username:password@hostname:port"}), 400
