@@ -1,20 +1,20 @@
 # YouTube Transcription API
 
-A minimalistic Flask application that retrieves transcriptions from YouTube videos using Webshare proxy.
+A minimalistic Flask application that retrieves transcriptions from YouTube videos using a generic proxy configuration.
 
 ## Requirements
 - Python 3.9+
 - Docker (optional)
-- Webshare proxy credentials (optional)
 
 ## Configuration
 
-Create a `.env` file with your Webshare proxy credentials:
+Create a `.env` file with your secret key:
 
 ```
-WEBSHARE_USERNAME=your_webshare_username
-WEBSHARE_PASSWORD=your_webshare_password
+SECRET_KEY=your_secret_key
 ```
+
+The secret key must match the one used to encrypt the proxy strings on the client side.
 
 ## Installation and Running Locally
 
@@ -104,10 +104,61 @@ sudo systemctl start youtube-transcript.service
 
 ### Get a transcript
 ```
-GET /transcript?videoId=VIDEO_ID
+POST /transcript
+Content-Type: application/json
+
+{
+    "videoId": "VIDEO_ID",
+    "language": "en",  // optional, defaults to "en"
+    "proxy": "ENCRYPTED_PROXY_STRING"  // optional
+}
 ```
 
-Example:
+Parameters:
+- `videoId`: The YouTube video ID (required)
+- `language`: Specify a language code (e.g., 'en', 'es', 'fr') to get transcript in that language (defaults to 'en')
+  - Note: This parameter only affects manual transcripts. Auto-generated transcripts are always returned in their original language.
+- `proxy`: Encrypted proxy configuration string (encrypted using AES-GCM)
+  - The proxy string should be encrypted before being sent to the API
+  - The secret key must match the one configured in the server's environment variables
+
+Examples:
 ```
-curl http://localhost:6391/transcript?videoId=VIDEO_ID
-``` 
+# Get transcript in English (default) for manual transcripts
+curl -X POST http://localhost:6391/transcript \
+  -H "Content-Type: application/json" \
+  -d '{"videoId": "VIDEO_ID"}'
+
+# Get transcript specifically in Spanish for manual transcripts
+curl -X POST http://localhost:6391/transcript \
+  -H "Content-Type: application/json" \
+  -d '{"videoId": "VIDEO_ID", "language": "es"}'
+
+# Get transcript using an encrypted proxy
+curl -X POST http://localhost:6391/transcript \
+  -H "Content-Type: application/json" \
+  -d '{"videoId": "VIDEO_ID", "proxy": "ENCRYPTED_PROXY_STRING"}'
+```
+
+Note: The proxy string must be encrypted using the same secret key configured in the server's environment variables. The encryption implementation uses AES-GCM with the following parameters:
+- Key derivation: PBKDF2 with SHA-256
+- Key length: 256 bits
+- Iterations: 100,000
+- Salt: "cloudflare-workers-salt"
+
+### Transcript Prioritization System
+
+The API tries to fetch transcripts in the following order of priority:
+
+1. Manual (human-created) transcript in the requested language (default: English)
+2. Auto-generated transcript in its original language (ignoring the language parameter)
+3. Manual transcript in any language, translated to the requested language
+4. Last resort fallback to original API method
+
+The response includes additional metadata:
+- `language`: The language of the returned transcript 
+- `is_generated`: Whether the transcript was auto-generated
+- `translated`: Whether the transcript was translated from another language (for manual transcripts only)
+- `original_language`: The original language before translation (if applicable)
+
+This ensures you get the best available transcript quality for each video. Auto-generated transcripts are always provided in their original language to preserve accuracy. 
